@@ -62,7 +62,6 @@ int main(int argc, char **argv) {
     }
     cv.notify_all();
     for(auto &i : qs) {
-        printf("Join\n");
         i.join();
     }
     return 0;
