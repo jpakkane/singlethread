@@ -7,9 +7,17 @@
 #include<cstdlib>
 #include<cstring>
 #include<string>
+#include<signal.h>
 
 static const int PORT = 4442;
 #define MAX_EVENTS 100
+
+int listen_sock;
+
+static void handler(int) {
+    close(listen_sock);
+    exit(1);
+}
 
 void serve(int fd) {
     std::string buf;
@@ -25,16 +33,28 @@ void serve(int fd) {
 
 int mainloop() {
     struct epoll_event ev, events[MAX_EVENTS];
-    int listen_sock, conn_sock, nfds, epollfd;
+    int conn_sock, nfds, epollfd;
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(struct sockaddr_in));
     addr.sin_family = AF_INET;
-    addr.sin_port = htonl(PORT);
+    addr.sin_port = htons(PORT);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     listen_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if(listen_sock < 0) {
+        perror("Create fail");
+        exit(EXIT_FAILURE);
+    }
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sa.sa_handler = handler;
+    if(sigaction(SIGINT, &sa, nullptr) < 0) {
+        perror("Signal fail");
+        return 1;
+    }
     if(bind(listen_sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        perror("Fail\n");
+        perror("Bind fail");
         exit(EXIT_FAILURE);
     }
     if(listen(listen_sock, 10) < 0) {
