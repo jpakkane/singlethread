@@ -37,6 +37,10 @@ int mainloop() {
         perror("Fail\n");
         exit(EXIT_FAILURE);
     }
+    if(listen(listen_sock, 10) < 0) {
+        perror("Listen");
+        exit(EXIT_FAILURE);
+    }
     epollfd = epoll_create(1);
     if (epollfd == -1) {
         perror("epoll_create");
@@ -58,12 +62,11 @@ int mainloop() {
 
         for (int n = 0; n < nfds; ++n) {
             if (events[n].data.fd == listen_sock) {
-                conn_sock = accept(listen_sock, nullptr, nullptr);
+                conn_sock = accept(listen_sock, nullptr, 0);
                 if (conn_sock == -1) {
                     perror("accept");
                     exit (EXIT_FAILURE);
                 }
-                //setnonblocking(conn_sock);
                 ev.events = EPOLLIN | EPOLLET;
                 ev.data.fd = conn_sock;
                 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, &ev) == -1) {
