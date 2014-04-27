@@ -6,6 +6,7 @@
 #include<cstdio>
 #include<cstdlib>
 #include<cstring>
+#include<cassert>
 
 static const int PORT = 4442;
 
@@ -16,7 +17,7 @@ void query(int s) {
     write(s, q, l);
     q[0] = '\0';
     read(s, q, l);
-    printf("%s\n", q);
+    assert(strcmp(q, "hello\n") == 0);
 }
 
 int main(int argc, char **argv) {
@@ -24,7 +25,7 @@ int main(int argc, char **argv) {
     int s = socket(AF_INET, SOCK_STREAM, 0);
     memset(&addr, 0, sizeof(struct sockaddr_in));
     addr.sin_family = AF_INET;
-    addr.sin_port = htonl(PORT);
+    addr.sin_port = htons(PORT);
     if(inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) <= 0) {
         perror("Fail.");
         return 1;
@@ -33,6 +34,8 @@ int main(int argc, char **argv) {
         perror("Fail.");
         return 1;
     }
-    query(s);
+    for(int i=0; i<10000; i++) {
+        query(s);
+    }
     return 0;
 }
